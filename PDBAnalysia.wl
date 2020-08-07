@@ -12,17 +12,17 @@
 (*TODO: make this package have a formal format*)
 
 
-Print["PDB loaded."]
+Print["pdbanalysia loaded."]
 
 
-BeginPackage["ProteinStructure`"]
+BeginPackage["PDBAnalysia`"]
 
 
 (* ::Section:: *)
 (*Usages of all public functions*)
 
 
-(*TODO: make usage more comprehensive*)
+(*TODO: make usage message more comprehensive*)
 (*Only the functions or varibles listed here can be directly accessed in notebook*)
 AAAbbrDict123::usage="An association used for converting Abbr. of Amino Acid, like G -> GLY"
 AAAbbrDict321::usage="An association used for converting Abbr. of Amino Acid, like GLY -> G"
