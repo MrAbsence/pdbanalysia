@@ -7,30 +7,22 @@
 (*2020-1-2: add new option for ContactChartDistanceIntra to select the unit of distance.*)
 (*2020-1-15: add asymmetric contact chart.*)
 (*2020-3-23: add options in GetPDB to select the chain identifier.*)
-(*2020-12-30: fix a bug in loading atom coords.*)
-(*2021-02-27: add a function of rename entries in association.*)
 
 
 (*TODO: make this package have a formal format*)
 
 
-Print["PDB loaded."]
+Print["pdbanalysia loaded."]
 
 
-BeginPackage["ProteinStructure`"]
+BeginPackage["PDBAnalysia`"]
 
 
 (* ::Section:: *)
 (*Usages of all public functions*)
 
 
-OpenProteinStructureWL::usage="Open this package file. The global varible \"Dropbox\" must be defined in init.m (check $UserBaseDirectory\\kernel)."
-
-
-RenameKeyInAssociation::usage="RenameKeyInAssociation[assoc,oldKey,newKey]"
-
-
-(*TODO: make usage more comprehensive*)
+(*TODO: make usage message more comprehensive*)
 (*Only the functions or varibles listed here can be directly accessed in notebook*)
 AAAbbrDict123::usage="An association used for converting Abbr. of Amino Acid, like G -> GLY"
 AAAbbrDict321::usage="An association used for converting Abbr. of Amino Acid, like GLY -> G"
@@ -38,8 +30,7 @@ AAAbbrDict321::usage="An association used for converting Abbr. of Amino Acid, li
 GetPDB::usage="GetPDB[directory,pdbfilename,LoadMode->\"Residues\"]
 Load a PDB file, make each atom an association.
 Usually, group all atoms by residues(LoadMode->\"Residues\")."
-Options[GetPDB]={LoadMode->"Residues"
-(*"Residues"(default): atom list grouped by residues,
+Options[GetPDB]={LoadMode->"Residues"(*"Residues"(default): atom list grouped by residues,
 "Atoms": just atom list,
 "Graphic": return a wireframe Graphics3D,
 "SegTree": return a hash tree: SegName\[Equal]> ResNum(Int)\[Equal]>AtomName \[Equal]> Infomation,
@@ -50,19 +41,16 @@ LoadMode::usage="Residues, Atoms, Tree or Graphic.
 \"Graphic\": return a wireframe Graphics3D
 \"SegTree\": return a hash tree: SegName\[Equal]> ResNum(Int)\[Equal]>AtomName \[Equal]> Infomation. You can access one atom associate by Tree[SegName][ResNum][AtomName]. This is used for getting atom index for constrains.
 \"ChainTree\": return a hash tree: ChainName\[Equal]> ResNum(Int)\[Equal]>AtomName \[Equal]> Infomation*)"
-
-
 PDBPickResidues::usage="PDBPickResidues[pdbResidueMode, range]
 (range is the same as Take[], usually it is {m,n})
-Take some residues from a pdb data to form a new one. It can be used to separate two chains in the same pdb file.
-Important!! It can renumber all the residues based on the index in the new list"
-Options[PDBPickResidues]={RenumberResidues->0};
-RenumberResidues::usage="0 means not rewrite those nums, and any integer larger than 0 means rewritting and start from this num."
-
+Take some residues from a pdb data to form a new one. It could be used to separate two chains in the same pdb file.
+Important!! It could renumber all the residues based on the index in the new list"
+Options[PDBPickResidues]={RenumberResidues->0};(*0 means not rewrite those nums, anything larger than 0 means rewritting and start from this num*)
+RenumberResidues::usage="0 means not rewrite those nums, anything larger than 0 means rewritting and start from this num."
 
 PDBResidueSeq::usage="Format output the residue sequence (with residue's ordinal) of the pdbdata."
 Options[PDBResidueSeq]={ShowNumEvery->1(*Must \[GreaterEqual] 1*),RemoveDuplicateChains->True,ReturnSeqOnly->False};
-ShowNumEvery::usage="Show numbers for every N residues. Must \[GreaterEqual] 1."
+ShowNumEvery::usage="Show numbers for every N residues."
 PDBResidues::usage="List all the types of residues in the pdbdata."
 PDBAtoms::usage="All atoms are grouped by residues, return an association of these groups."
 Options[PDBAtoms]={AtomType->"[CN]"(*Use regx to define which types of atoms should be selected*)};
@@ -80,10 +68,9 @@ PDBTabulateDARRContratsFull::usage="This function is for a large oligomer system
 Options[PDBTabulateDARRContratsFull]={IgnoreAdjacent->1, DARRNuclearRegx->"^C.*$", OutputStyle->"Contacts"(*"Graph","Distances","Contacts"*),SameTypeAAContact->True};
 
 
-ContactChartSymmetric::usage="This is a fancy function to put all the contacts into a contact chart(table).\nIn the contact chart, the contact symbols are drawn at the positions in the contact list.\nThe default contact symbol is red box. You may change it to five angle star or circles.\nExample: ContactSymbol->Item[Graphics[Text[Style[\"\[FivePointedStar]\",Black,Bold,56]],ImageSize-> {50,50}],Background\[Rule]None],\nNonContactSymbol->Item[Graphics[{},Background-> None,ImageSize-> {50,50}],Background\[Rule]None]"
+ContactChartSymmetric::usage="This is a fancy function for put all the contacts into a contact chart(table)"
 Options[ContactChartSymmetric]={ContactSymbol->Item[Graphics[{},Background-> Red,ImageSize-> {50,50}],Background->Red],NonContactSymbol->Item[Graphics[{},Background-> White,ImageSize-> {50,50}],Background->White]}
-ContactSymbol::usage="ContactSymbols is an \"Items\" which will be drawn into the contact cells";
-NonContactSymbol::usage="Non-contact symbols are drawn at all the remaining positions! Thus, blank is usually used as non-contact symbol."
+ContactSymbol::usage="ContactSymbols is an \"Items\" which will be filled into the contact cells";
 
 
 ContactChartAsymmetric2Peptides::usage="This is a fancy function for put all the contacts into a contact chart(table). It allows you to create an asymmetric table from two peptides."
@@ -92,18 +79,22 @@ Options[ContactChartAsymmetric2Peptides]={ContactSymbol->Item[Graphics[{},Backgr
 
 ContactChartDistanceIntra::usage="This function will generate one chart with the minimum distance between different residues"
 Options[ContactChartDistanceIntra]={NucleusTypeRegx->"^C.*$",DARRDistance->6.01,DistanceUnit->"nm"}
-DistanceUnit::usage="It only support \"nm\" or \"A\"."
+DistanceUnit::usage="It only support nm or A."
 
 
 ContactChartDistanceInter::usage="This function will generate one chart with the minimum distance between residues from 2 peptide molecules"
 Options[ContactChartDistanceInter]={NucleusTypeRegx->"^C.*$",DARRDistance->6.01,DistanceUnit->"nm"}
 
 
-Begin["`Private`"](*The following is private functions*)
-
-
 (* ::Section:: *)
-(*Some common knowledge of this package*)
+(*Here begins the functions in this package*)
+
+
+Begin["`Private`"]
+
+
+(* ::Subsection:: *)
+(*Some common knowledge in this package*)
 
 
 (*These two associations are used for converting Abbr. of Amino Acid*)
@@ -120,18 +111,7 @@ AtomAssociasionExample=<|"AtomNums"->"Int","ElementType"->"1Letter","AtomNames"-
 ChangeDirectory[dirstring_]:=If[$OperatingSystem=="Unix" || $OperatingSystem == "MacOSX",SetDirectory[StringReplace[dirstring,"\\"->"/"]],SetDirectory[StringReplace[dirstring,"/"->"\\\\"]]]
 
 
-RenameKeyInAssociation[assoc_,oldKey_,newKey_]:=Module[{assocNew},
-assocNew = assoc;
-assocNew[newKey] = assoc[oldKey];
-assocNew = KeyDrop[assocNew,oldKey];
-assocNew]
-
-
-(*supporting functions that might be useful some day*)
-OpenProteinStructureWL[]:=Button["open ProteinStructure.wl",SystemOpen[Global`Dropbox<>"\\MathematicaConfig\\YG\\ProteinStructure.wl"]]
-
-
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Load the PDB information*)
 
 
@@ -155,9 +135,7 @@ PDBData=Import[PDBName,"Lines"];
 PDBData =Select[PDBData,StringMatchQ[#,RegularExpression["^ATOM\\s+\\d+.+$"]]&];
 (*Get useful informations in to different lists*)
 (*Based on PDB format: https://www.cgl.ucsf.edu/chimera/docs/UsersGuide/tutorials/framepdbintro.html*)
-(*The string split method may work in most conditions. However, there is no space between those numbers in some pdb file. e.g. 2LNQ*)
-(*AtomCoords =ToExpression[#]&/@StringSplit[StringTake[PDBData,{31,54}]];*)
-AtomCoords = ToExpression[#]&/@StringTake[PDBData,{{31,38},{39,46},{47,54}}];
+AtomCoords =ToExpression[#]&/@StringSplit[StringTake[PDBData,{31,54}]];
 AtomNums =ToExpression[#]&/@StringTake[PDBData,{6,11}];
 ResidueNums=ToExpression[#]&/@StringTake[PDBData,{23,26}];
 AtomNames = StringTrim[#]&/@StringTake[PDBData,{13,16}];
@@ -191,7 +169,7 @@ ResetDirectory[];
 PDBData
 ]
 
-(*Take some residues from a pdb data to form a new one. It could be used to separate two chains in the same pdb file. Important!! It can renumber all the residues based on the index in the new list*)
+(*Take some residues from a pdb data to form a new one. It could be used to separate two chains in the same pdb file. Important!! It could renumber all the residues based on the index in the new list*)
 PDBPickResidues[pdbdata_,residualnum_,opts___?OptionQ]:=
 Module[{PickedResidues,rnr},
 rnr=RenumberResidues/.{opts}/.Options[PDBPickResidues];
@@ -200,7 +178,7 @@ If[rnr==0,PickedResidues,Table[<|#,"ResidueNums"->i+rnr-1|>&/@PickedResidues[[i]
 ]
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Manipulate content in PDB files*)
 
 
@@ -211,7 +189,7 @@ pdblines(*not done*)
 ]
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Display residue info in PDBData*)
 
 
@@ -247,7 +225,7 @@ AssociationThread[PDBResidueSeq[pdbdata,RemoveDuplicateChains->False,ReturnSeqOn
 
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Detect contacts between residues*)
 
 
@@ -346,8 +324,36 @@ osty=="FUTUREFUNCTION",0]
 ]
 
 
-(* ::Section:: *)
-(*Display Functions*)
+(* ::Subsection:: *)
+(*Torsion angles*)
+
+
+TorsionAngle4Points[p1_,p2_,p3_,p4_]:=Module[{veca,vecb,vecc,realx,imagy},
+veca=p2-p1;
+vecb=p3-p2;
+vecc=p4-p3;
+(*The math is explained in Dropbox\MathematicaConfig\YG\6_torsion.pdf*)
+realx=-(Norm[vecb])^2*(veca.vecc)+(veca.vecb)*(vecb.vecc);
+imagy=Norm[vecb]*(veca.(vecb\[Cross]vecc));
+Arg[realx+I imagy]*180/Pi
+]
+
+
+TorsionAngleOfResidue[pdbInTree_,segName_,resNum_]:=Module[{resPhi,resPsi},
+resPhi=TorsionAngle4Points[pdbInTree[segName][resNum-1]["C"]["AtomCoords"],
+pdbInTree[segName][resNum]["N"]["AtomCoords"],
+pdbInTree[segName][resNum]["CA"]["AtomCoords"],
+pdbInTree[segName][resNum]["C"]["AtomCoords"]];
+resPsi=TorsionAngle4Points[pdbInTree[segName][resNum]["N"]["AtomCoords"],
+pdbInTree[segName][resNum]["CA"]["AtomCoords"],
+pdbInTree[segName][resNum]["C"]["AtomCoords"],
+pdbInTree[segName][resNum+1]["N"]["AtomCoords"]];
+{resPhi,resPsi}
+]
+
+
+(* ::Subsection:: *)
+(*Figure or chart Functions*)
 
 
 (* ::Input:: *)
@@ -355,9 +361,6 @@ osty=="FUTUREFUNCTION",0]
 
 
 (*This is a fancy function for put all the contacts into a contact chart(table)*)
-(*In the contact chart, the contact symbols are drawn at the positions in the contact list.*)
-(*Non-contact symbols are drawn at all the remaining positions! Thus, blank is usually used as non-contact symbol.*)
-(*For example, if "A1\F10" is in the contact list. There will be a contact symbol at the cross cell of A1 and F10.*)
 ContactChartSymmetric[aalist_,contactlist_,opts___?OptionQ]:=
 Module[{csys,ncsys,indexcontactlist,contactsyltable,fulltable},
 csys=ContactSymbol/.{opts}/.Options[ContactChartSymmetric];
