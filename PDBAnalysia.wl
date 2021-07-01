@@ -14,17 +14,17 @@
 (*TODO: make this package have a formal format*)
 
 
-Print["PDB loaded."]
+Print["PDBanalysia loaded."]
 
 
-BeginPackage["ProteinStructure`"]
+BeginPackage["PDBAnalysia`"]
 
 
 (* ::Section:: *)
 (*Usages of all public functions*)
 
-
-OpenProteinStructureWL::usage="Open this package file. The global varible \"Dropbox\" must be defined in init.m (check $UserBaseDirectory\\kernel)."
+(*This is a function to assist developers viewing source code*)
+(*OpenProteinStructureWL::usage="Open this package file. The global varible \"Dropbox\" must be defined in init.m (check $UserBaseDirectory\\kernel)."*)
 
 
 RenameKeyInAssociation::usage="RenameKeyInAssociation[assoc,oldKey,newKey]"
@@ -128,7 +128,9 @@ assocNew]
 
 
 (*supporting functions that might be useful some day*)
-OpenProteinStructureWL[]:=Button["open ProteinStructure.wl",SystemOpen[Global`Dropbox<>"\\MathematicaConfig\\YG\\ProteinStructure.wl"]]
+
+(*A function to open the source code of this package*)
+(*OpenProteinStructureWL[]:=Button["open ProteinStructure.wl",SystemOpen[Global`Dropbox<>"\\MathematicaConfig\\YG\\ProteinStructure.wl"]]*)
 
 
 (* ::Section:: *)
